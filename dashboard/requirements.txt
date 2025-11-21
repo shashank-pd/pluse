@@ -1,0 +1,5 @@
+Flask==3.0.0
+flask-cors==4.0.0
+kubernetes==28.1.0
+google-cloud-pubsub==2.18.4
+google-cloud-monitoring==2.16.0

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse Autoscaler - Live Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #0f0f0f;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+            color: #e6e6e6;
+        }
+
+        .card h2 {
+            color: #ffffff;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            border-bottom: 1px solid #222;
+            padding-bottom: 10px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .status-item {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .status-item .label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .status-item .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .status-running {
+            color: #28a745 !important;
+        }
+
+        .status-error {
+            color: #dc3545 !important;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        button {
+            background: #222222;
+            color: white;
+            border: 1px solid #333;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-danger {
+            background: #6b1f2d;
+        }
+
+        .btn-success {
+            background: #1b6b3a;
+        }
+
+        .btn-warning {
+            background: #8a5b00;
+        }
+
+        #logs {
+            background: #000000;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        #logs .log-line {
+            margin: 2px 0;
+            white-space: pre-wrap;
+        }
+
+        #logs .log-critical {
+            color: #ff6b6b;
+        }
+
+        #logs .log-warning {
+            color: #ffd93d;
+        }
+
+        #logs .log-success {
+            color: #6bcf7f;
+        }
+
+        #logs .log-info {
+            color: #4dabf7;
+        }
+
+        .decisions-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .decision-item {
+            background: #111111;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 4px solid #333333;
+            color: #eaeaea;
+        }
+
+        .decision-item .time {
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .decision-item .message {
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            padding: 20px;
+        }
+
+        .custom-input {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .custom-input input,
+        .custom-input select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .custom-input input:focus,
+        .custom-input select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Pulse Autoscaler - Live Dashboard</h1>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Current Status</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="label">Replicas</div>
+                        <div class="value" id="replicas">-</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Ready Pods</div>
+                        <div class="value status-running" id="ready-pods">-</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Nodes</div>
+                        <div class="value" id="nodes">-</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Autoscaler</div>
+                        <div class="value status-running" id="autoscaler-status">-</div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Last Decision:</div>
+                    <div id="last-decision" style="font-size: 0.95em; font-weight: 500;">-</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Quick Tests</h2>
+                <div class="button-grid">
+                    <button onclick="runTest('scale_up')">Scale UP Test</button>
+                    <button onclick="runTest('scale_down')">Scale DOWN Test</button>
+                    <button onclick="runTest('balanced')">Balanced Load</button>
+                    <button onclick="runTest('critical')">Critical Event</button>
+                    <button onclick="runTest('high_latency')" class="btn-warning">High Latency</button>
+                    <button onclick="refreshAll()" class="btn-success">Refresh All</button>
+                </div>
+                <div id="test-result"></div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Replica Count Timeline</h2>
+                <div class="chart-container">
+                    <canvas id="replicaChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Node Count Timeline</h2>
+                <div class="chart-container">
+                    <canvas id="nodeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Recent Scaling Decisions</h2>
+                <div class="decisions-list" id="decisions">
+                    <div class="loading">Loading decisions...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Live Autoscaler Logs</h2>
+                <div id="logs">
+                    <div class="loading">Loading logs...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Custom Load Trigger</h2>
+            <div class="custom-input">
+                <input type="number" id="cpu" placeholder="CPU %" value="80" min="0" max="100">
+                <input type="number" id="memory" placeholder="Memory %" value="60" min="0" max="100">
+                <input type="number" id="latency" placeholder="Latency (ms)" value="400" min="0" max="2000">
+                <input type="number" id="error_rate" placeholder="Error Rate %" value="5" min="0" max="100">
+                <select id="severity">
+                    <option value="INFO">INFO</option>
+                    <option value="WARNING" selected>WARNING</option>
+                    <option value="CRITICAL">CRITICAL</option>
+                </select>
+                <button onclick="triggerCustomLoad()" class="full-width">Trigger Custom Load</button>
+            </div>
+            <div id="custom-result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let replicaChart, nodeChart;
+        let autoRefresh = true;
+
+        function initCharts() {
+            const chartConfig = {
+                type: 'line',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            };
+
+            replicaChart = new Chart(document.getElementById('replicaChart'), {
+                ...chartConfig,
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Replicas',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                }
+            });
+
+            nodeChart = new Chart(document.getElementById('nodeChart'), {
+                ...chartConfig,
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Nodes',
+                        data: [],
+                        borderColor: '#764ba2',
+                        backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                }
+            });
+        }
+
+        async function updateStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/api/status`);
+                const data = await res.json();
+
+                document.getElementById('replicas').textContent = data.replicas || '-';
+                document.getElementById('ready-pods').textContent = data.ready_replicas || '-';
+                document.getElementById('nodes').textContent = data.nodes || '-';
+                document.getElementById('autoscaler-status').textContent = data.autoscaler_status || '-';
+                document.getElementById('last-decision').textContent = data.last_decision || 'No recent decisions';
+
+                const time = new Date(data.timestamp).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
+                updateChart(replicaChart, time, data.replicas);
+                updateChart(nodeChart, time, data.nodes);
+
+            } catch (err) {
+                console.error('Error updating status:', err);
+            }
+        }
+
+        function updateChart(chart, label, value) {
+            if (chart.data.labels.length > 20) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(value);
+            chart.update('none');
+        }
+
+        async function updateLogs() {
+            try {
+                const res = await fetch(`${API_BASE}/api/logs?lines=50`);
+                const data = await res.json();
+
+                const logsDiv = document.getElementById('logs');
+                logsDiv.innerHTML = '';
+
+                const lines = Array.isArray(data.logs)
+                    ? data.logs
+                    : (typeof data.logs === 'string' ? data.logs.split('\n') : []);
+
+                lines.forEach(rawLine => {
+                    if (!rawLine) return;
+                    const line = rawLine.trim();
+                    if (!line) return;
+
+                    const div = document.createElement('div');
+                    div.className = 'log-line';
+
+                    const u = line.toUpperCase();
+
+                    if (/\bCRITICAL\b/.test(u) || /\bERROR\b/.test(u)) {
+                        div.classList.add('log-critical');
+                    } else if (/\bWARNING\b/.test(u) || /\bWARN\b/.test(u) || /\bALERT\b/.test(u)) {
+                        div.classList.add('log-warning');
+                    } else if (/\bSCALED\b/.test(u) || /\bSCALE\b/.test(u) || /\bSUCCESS\b/.test(u) || /\bOK\b/.test(u)) {
+                        div.classList.add('log-success');
+                    } else if (/\bDECISION\b/.test(u) || /\bMETRIC\b/.test(u) || /\bCOMPOSITE\b/.test(u) || /\bINFO\b/.test(u) || /\bDEBUG\b/.test(u)) {
+                        div.classList.add('log-info');
+                    }
+
+                    div.textContent = line;
+                    logsDiv.appendChild(div);
+                });
+
+                logsDiv.scrollTop = logsDiv.scrollHeight;
+
+            } catch (err) {
+                console.error('Error fetching logs:', err);
+            }
+        }
+        async function updateDecisions() {
+            try {
+                const res = await fetch(`${API_BASE}/api/decisions`);
+                const data = await res.json();
+
+                const decisionsDiv = document.getElementById('decisions');
+                decisionsDiv.innerHTML = '';
+
+                if (data.length === 0) {
+                    decisionsDiv.innerHTML = '<div class="loading">No decisions yet</div>';
+                    return;
+                }
+
+                data.reverse().forEach(decision => {
+                    const div = document.createElement('div');
+                    div.className = 'decision-item';
+                    div.innerHTML = `
+                        <div class="time">${new Date(decision.timestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true })}</div>
+                        <div class="message">${decision.test || 'Autoscaler'}: ${decision.result}</div>
+                    `;
+                    decisionsDiv.appendChild(div);
+                });
+
+            } catch (err) {
+                console.error('Error fetching decisions:', err);
+            }
+        }
+
+        async function runTest(testName) {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Running test: ' + testName + '...</div>';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/test/${testName}`, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.error) {
+                    resultDiv.innerHTML = `<div class="alert alert-error">Error: ${data.error}</div>`;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>${data.test}</strong><br>
+                            ${data.message}<br>
+                            Initial: ${data.initial_replicas} → Final: ${data.final_replicas}
+                        </div>
+                    `;
+                }
+
+                setTimeout(refreshAll, 2000);
+
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="alert alert-error">Error: ${err.message}</div>`;
+            }
+        }
+
+        async function triggerCustomLoad() {
+            const cpu = document.getElementById('cpu').value;
+            const memory = document.getElementById('memory').value;
+            const latency = document.getElementById('latency').value;
+            const error_rate = document.getElementById('error_rate').value;
+            const severity = document.getElementById('severity').value;
+
+            const resultDiv = document.getElementById('custom-result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Publishing metric...</div>';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/trigger_load`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cpu: parseFloat(cpu), memory: parseFloat(memory), latency: parseFloat(latency), error_rate: parseFloat(error_rate), severity })
+                });
+
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-error">${data.message}</div>`;
+                }
+
+                setTimeout(() => { resultDiv.innerHTML = ''; }, 5000);
+                setTimeout(updateLogs, 2000);
+
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="alert alert-error">Error: ${err.message}</div>`;
+            }
+        }
+
+        function refreshAll() {
+            updateStatus();
+            updateLogs();
+            updateDecisions();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            refreshAll();
+
+            setInterval(() => {
+                if (autoRefresh) {
+                    updateStatus();
+                }
+            }, 10000);
+
+            setInterval(() => {
+                if (autoRefresh) {
+                    updateLogs();
+                }
+            }, 15000);
+
+            setInterval(() => {
+                if (autoRefresh) {
+                    updateDecisions();
+                }
+            }, 30000);
+        });
+    </script>
+</body>
+
+</html>
