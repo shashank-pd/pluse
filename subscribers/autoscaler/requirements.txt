@@ -1,0 +1,5 @@
+flask==3.0.0
+google-cloud-pubsub==2.18.4
+kubernetes==28.1.0
+google-cloud-monitoring==2.15.0
+google-cloud-container==2.48.0
