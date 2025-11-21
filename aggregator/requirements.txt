@@ -1,0 +1,6 @@
+flask
+google-cloud-pubsub
+google-cloud-logging
+gunicorn
+kubernetes
+
