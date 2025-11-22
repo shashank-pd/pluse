@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-node
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fake-node
+  template:
+    metadata:
+      labels:
+        app: fake-node
+    spec:
+      serviceAccountName: pulse-fakenode-ksa
+      containers:
+      - name: fake-node
+        image: asia-south1-docker.pkg.dev/pulse-477304/pulse-repo/fake-node:latest
+        env:
+        - name: GCP_PROJECT
+          value: "pulse-477304"
+        - name: METRICS_TOPIC
+          value: "metrics-topic"
+        - name: NODE_ID 
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
