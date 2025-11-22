@@ -1,0 +1,44 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pulse-autoscaler
+  labels:
+    app: pulse-autoscaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pulse-autoscaler
+  template:
+    metadata:
+      labels:
+        app: pulse-autoscaler
+    spec:
+      serviceAccountName: pulse-node-scaler 
+      containers:
+      - name: autoscaler
+        image: asia-south1-docker.pkg.dev/pulse-477304/pulse-repo/autoscaler:v3.0 
+        imagePullPolicy: Always
+        env:
+        - name: GCP_PROJECT
+          value: "pulse-477304"
+        - name: EVENT_SUB
+          value: "events-sub"
+        - name: TARGET_DEPLOY
+          value: "workload"
+        - name: NAMESPACE
+          value: "default"
+        - name: MIN_REPLICAS
+          value: "1"
+        - name: MAX_REPLICAS
+          value: "10"
+        # Node autoscaling configuration
+        - name: PROJECT_ID
+          value: "pulse-477304"
+        - name: ZONE
+          value: "asia-south1-a"
+        - name: CLUSTER_NAME
+          value: "pulse-gke"
+        - name: NODE_POOL_NAME
+          value: "pulse-pool"
