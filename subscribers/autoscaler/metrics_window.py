@@ -2,7 +2,7 @@ from collections import deque
 
 class MetricsWindow:
     def __init__(self, window_size=5):
-        self.window_size = window_size
+        self.window_size = window_size 
         self.data = deque(maxlen=window_size)
     
     def add(self, timestamp, metrics):
