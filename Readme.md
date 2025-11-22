@@ -1,6 +1,6 @@
 <div align="center">
 <h1>Pulse</h1>
-<p><em><strong>Pulse is a production-focused autoscaling engine for Kubernetes</strong>, designed to scale <strong>Pods + Nodes</strong> based on real workload pressure — not just CPU.
+<p><em><strong>Pulse is a production-focused autoscaling engine for Kubernetes</strong>, designed to scale <strong>Pods + Nodes</strong> based on real workload pressure, not just CPU.
 It blends: Real application metrics (CPU, latency, error-rate), Pub/Sub queue pressure, Node health & taints, OOMKilled + memory pressure & Spike detection using sliding-window analytics  
 </em></p>
 
