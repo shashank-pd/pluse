@@ -36,6 +36,8 @@ It blends: Real application metrics (CPU, latency, error-rate), Pub/Sub queue pr
 - [Some Concepts](#some-concepts)
 - [RBAC & Security](#rbac-and-security)
 - [Cost optimization & comparisons](#cost-optimization)
+- [HPA vs Pulse Autoscaler](#hpa-vs-pulse-autoscaler)
+- [KEDA vs Pulse Autoscaler](#keda-vs-pulse-autoscaler)
 - [Run / Deploy / Test](#run-deploy-test)
 
 <a id="overview"></a>
@@ -128,27 +130,49 @@ Python Concepts:
 - Background threads for periodic checks and Pub/Sub subscription callbacks
 - Proper timezone handling for IST timestamps
 
-<a id="rbac-and-security"></a>
+Here is a **clean, polished, professional README section** for your RBAC — short, impressive, and written exactly like a real production project.
+
+
 ## RBAC & Security
-- The dashboard and autoscaler require specific RBAC permissions. At minimum, the autoscaler needs:
-	- `get`, `list`, `watch` on `pods`, `nodes`, `deployments`, `events`
-	- `patch` on `deployments` (to modify replica counts and resource limits)
-	- `patch` on `nodes` when quarantining (optional)
 
-- Typical ServiceAccount/RoleBinding:
-	- Create a `ServiceAccount` (e.g., `pulse-autoscaler-sa`).
-	- Grant a `ClusterRole` with the minimal permissions above.
-	- Bind with a `ClusterRoleBinding` or `RoleBinding` according to scope.
+Pulse follows a **strict least-privilege RBAC model**, ensuring the autoscaler has *only the permissions genuinely required* to operate safely inside the cluster.
 
-- For GCP:
-	- Use Workload Identity or attach a service account key that has Pub/Sub subscriber permissions and (if used) GKE node-pool management permissions.
+### Fine-grained, purpose built permissions
 
-- Security best-practices:
-	- Least-privilege RBAC rules (avoid `*` verbs on `*` resources).
-	- Use Workload Identity instead of service-account JSON keys where possible.
-	- Restrict dashboard access via Ingress + TLS + auth in production.
+The autoscaler is granted only the minimal access needed:
+
+* **Read-only:** Pods, Nodes, Deployments
+* **Patch-only:** Deployment replicas (scaling), Node spec (cordon/drain)
+* **Metrics access:** nodes + pods via `metrics.k8s.io`
+* **Controlled pod eviction:** delete permissions limited *only* for safe draining operations — no broad delete powers.
+
+### Separation of duties (Two ServiceAccounts)
+
+To avoid privilege overload:
+
+* **`pulse-ksa`** → Pod autoscaling (deployments, backlog decisions)
+* **`pulse-node-scaler`** → Node autoscaling (cordon, drain, metrics evaluation)
+
+Each component receives *just enough* access for its responsibility.
+
+### No wildcard permissions
+
+No `*` verbs, no `*` resources.
+Everything is explicitly scoped to avoid accidental privilege escalation and to maintain predictable runtime behavior.
+
+### Outcome
+
+This RBAC configuration ensures:
+
+* Secure autoscaling
+* Safe node draining
+* Compliance with Kubernetes security best-practices
+
+Pulse scales aggressively when needed, but operates securely at all times.
+
+
 <a id="cost-optimization"></a>
-## Cost Optimization — before & after, plus comparisons
+## Cost Optimization [Before vs After]
 Naive scaling (request-based autoscaling or simple HPA on CPU) often leads to over-provisioning or reactive scaling that costs money.
 
 - **Before (request-based / naive HPA)**
@@ -156,13 +180,38 @@ Naive scaling (request-based autoscaling or simple HPA on CPU) often leads to ov
 - **After (usage-based composite autoscaler in this project)**
 	- Decisions are derived from a composite score (CPU + latency + error-rate) and Pub/Sub backlog indicators. This reduces false positives (noisy spikes) and focuses scaling on real workload pressure.
 
-- **Normal HPA vs this system**
-	- HPA: single-metric, reactive, limited knowledge of message backlogs or node health.
-	- Our Pulse system: multi-signal, sliding-window smoothing, critical-event fast path, node-aware scaling, memory auto-tuning.
 
-- **Pulse (Our System) vs KEDA**
-	- KEDA is excellent for scaling on external event sources (queues), but it often triggers purely on backlog or event rate.
-	- Our system combines KEDA-style signals (backlog) with application-level SLOs (latency percentiles) and node health, producing more holistic decisions and enabling memory optimization and node-scaling policies.
+## HPA vs Pulse Autoscaler
+
+**Horizontal Pod Autoscaler (HPA)** scales pods based on **one or two simple metrics**, typically CPU or memory. It cannot combine multiple signals, detect runtime issues, or understand service health.
+
+**Pulse Autoscaler** extends far beyond HPA:
+
+* Uses **multiple metrics together**: CPU, latency (p95/p99), error rate, Pub/Sub backlog
+* Detects **CrashLoopBackOff** and **OOMKilled** events
+* Performs **trend and spike detection**
+* Applies **composite scoring** instead of threshold-only scaling
+* Includes **node-level autoscaling** and **memory optimization**, which HPA cannot do
+* Designed for **production SLO-driven scaling**, not just resource percentage scaling
+
+In short, **HPA = simple resource-based scaling**,
+**Pulse = full-stack intelligent autoscaling system** combining pods, nodes, and health signals.
+
+
+## KEDA vs Pulse Autoscaler
+
+Pulse does **not** use KEDA. KEDA is an event-driven autoscaler that scales workloads based on single external triggers (like Pub/Sub lag, queue length, rate, queries) and relies on HPA underneath.
+
+**Pulse takes a different approach:**
+
+* Uses **multiple signals together**: CPU, latency (p95/p99), error rate, Pub/Sub backlog, CrashLoopBackOff, OOMKilled, and trend analysis
+* Performs **composite scoring** instead of single-metric triggers
+* Includes **node-level scaling** (cordon, drain, resize node pools)
+* Includes **memory optimization logic** (adjusts limits on OOMKilled)
+* Built for **production SLO-driven scaling** and high-load environments
+
+In short, **KEDA is a single-trigger event autoscaler**, while **Pulse is a full custom autoscaling system** combining pod autoscaling, node autoscaling, and runtime health intelligence.
+
 
 <a id="run-deploy-test"></a>
 ## Run & Deploy (quick)
