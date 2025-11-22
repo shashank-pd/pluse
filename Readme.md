@@ -34,7 +34,7 @@ It blends: Real application metrics (CPU, latency, error-rate), Pub/Sub queue pr
 - [Sliding Window & Metrics Processing](#sliding-window-and-metrics-processing)
 - [Critical Interactions](#critical-interactions)
 - [Some Concepts](#some-concepts)
-- [RBAC & Security](#rbac-and-security)
+- [RBAC & Security](#rbac--security)
 - [Cost optimization & comparisons](#cost-optimization)
 - [HPA vs Pulse Autoscaler](#hpa-vs-pulse-autoscaler)
 - [KEDA vs Pulse Autoscaler](#keda-vs-pulse-autoscaler)
@@ -130,9 +130,6 @@ Python Concepts:
 - Background threads for periodic checks and Pub/Sub subscription callbacks
 - Proper timezone handling for IST timestamps
 
-Here is a **clean, polished, professional README section** for your RBAC — short, impressive, and written exactly like a real production project.
-
-
 ## RBAC & Security
 
 Pulse follows a **strict least-privilege RBAC model**, ensuring the autoscaler has *only the permissions genuinely required* to operate safely inside the cluster.
@@ -144,7 +141,7 @@ The autoscaler is granted only the minimal access needed:
 * **Read-only:** Pods, Nodes, Deployments
 * **Patch-only:** Deployment replicas (scaling), Node spec (cordon/drain)
 * **Metrics access:** nodes + pods via `metrics.k8s.io`
-* **Controlled pod eviction:** delete permissions limited *only* for safe draining operations — no broad delete powers.
+* **Controlled pod eviction:** delete permissions limited *only* for safe draining operations, no broad delete powers.
 
 ### Separation of duties (Two ServiceAccounts)
 
