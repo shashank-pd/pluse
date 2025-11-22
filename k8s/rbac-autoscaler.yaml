@@ -1,0 +1,46 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole 
+metadata:
+  name: autoscaler-role
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "deployments/scale"]
+  verbs: ["get", "list", "watch", "patch"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch", "delete", "deletecollection"] 
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "watch", "patch"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["nodes", "pods"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: autoscaler-binding
+subjects:
+- kind: ServiceAccount
+  name: pulse-ksa
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: autoscaler-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+#RBAC for node scaler service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: node-scaler-binding
+subjects:
+- kind: ServiceAccount
+  name: pulse-node-scaler
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: autoscaler-role
+  apiGroup: rbac.authorization.k8s.io
