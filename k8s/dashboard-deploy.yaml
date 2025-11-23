@@ -56,7 +56,7 @@ spec:
       serviceAccountName: pulse-dashboard
       containers:
         - name: dashboard
-          image: gcr.io/pulse-477304/pulse-dashboard:latest
+          image: asia-south1-docker.pkg.dev/pulse-477304/pulse-repo/dashboard:latest
           ports:
             - containerPort: 5000
               name: http
