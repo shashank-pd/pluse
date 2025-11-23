@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pulse-config
+  namespace: default
+data:
+  # Autoscaler
+  GCP_PROJECT: "pulse-477304"
+  EVENT_SUB: "events-sub"
+  TARGET_DEPLOY: "workload"
+  NAMESPACE: "default"
+  MIN_REPLICAS: "1"
+  MAX_REPLICAS: "10"
+  PROJECT_ID: "pulse-477304"
+  ZONE: "asia-south1-a"
+  CLUSTER_NAME: "pulse-gke"
+  NODE_POOL_NAME: "pulse-pool"
+
+  # Dashboard
+  DASHBOARD_PROJECT_ID: "pulse-477304"
+  DASHBOARD_TOPIC_NAME: "events-topic"
+
+  # Fake Node
+  FAKE_NODE_PROJECT: "pulse-477304"
+  METRICS_TOPIC: "metrics-topic"
