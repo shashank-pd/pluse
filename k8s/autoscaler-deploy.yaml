@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,30 +14,68 @@ spec:
       labels:
         app: pulse-autoscaler
     spec:
-      serviceAccountName: pulse-node-scaler 
+      serviceAccountName: pulse-node-scaler
       containers:
-      - name: autoscaler
-        image: asia-south1-docker.pkg.dev/pulse-477304/pulse-repo/autoscaler:latest
-        imagePullPolicy: Always
-        env:
-        - name: GCP_PROJECT
-          value: "pulse-477304"
-        - name: EVENT_SUB
-          value: "events-sub"
-        - name: TARGET_DEPLOY
-          value: "workload"
-        - name: NAMESPACE
-          value: "default"
-        - name: MIN_REPLICAS
-          value: "1"
-        - name: MAX_REPLICAS
-          value: "10"
-        # Node autoscaling configuration
-        - name: PROJECT_ID
-          value: "pulse-477304"
-        - name: ZONE
-          value: "asia-south1-a"
-        - name: CLUSTER_NAME
-          value: "pulse-gke"
-        - name: NODE_POOL_NAME
-          value: "pulse-pool"
+        - name: autoscaler
+          image: asia-south1-docker.pkg.dev/pulse-477304/pulse-repo/autoscaler:latest
+          imagePullPolicy: Always
+          env:
+            - name: GCP_PROJECT
+              valueFrom:
+                configMapKeyRef:
+                  name: pulse-config
+                  key: GCP_PROJECT
+
+            - name: EVENT_SUB
+              valueFrom:
+                configMapKeyRef:
+                  name: pulse-config
+                  key: EVENT_SUB
+
+            - name: TARGET_DEPLOY
+              valueFrom:
+                configMapKeyRef:
+                  name: pulse-config
+                  key: TARGET_DEPLOY
+
+            - name: NAMESPACE
+              valueFrom:
+                configMapKeyRef:
+                  name: pulse-config
+                  key: NAMESPACE
+
+            - name: MIN_REPLICAS
+              valueFrom:
+                configMapKeyRef:
+                  name: pulse-config
+                  key: MIN_REPLICAS
+
+            - name: MAX_REPLICAS
+              valueFrom:
+                configMapKeyRef:
+                  name: pulse-config
+                  key: MAX_REPLICAS
+
+            - name: PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: pulse-config
+                  key: PROJECT_ID
+
+            - name: ZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: pulse-config
+                  key: ZONE
+
+            - name: CLUSTER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: pulse-config
+                  key: CLUSTER_NAME
+
+            - name: NODE_POOL_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: pulse-config
+                  key: NODE_POOL_NAME
