@@ -14,7 +14,7 @@ data:
   PROJECT_ID: "pulse-477304"
   ZONE: "asia-south1-a"
   CLUSTER_NAME: "pulse-gke"
-  NODE_POOL_NAME: "pulse-pool"
+  NODE_POOL_NAME: "cheap-pool"
 
   # Dashboard
   DASHBOARD_PROJECT_ID: "pulse-477304"
