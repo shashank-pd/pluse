@@ -18,7 +18,7 @@ spec:
       serviceAccountName: pulse-node-scaler 
       containers:
       - name: autoscaler
-        image: asia-south1-docker.pkg.dev/pulse-477304/pulse-repo/autoscaler:v3.0 
+        image: asia-south1-docker.pkg.dev/pulse-477304/pulse-repo/autoscaler:latest
         imagePullPolicy: Always
         env:
         - name: GCP_PROJECT
