@@ -59,7 +59,7 @@ try:
         project_id=PROJECT,
         zone=os.environ.get("ZONE", "asia-south1-a"),
         cluster_name=os.environ.get("CLUSTER_NAME", "pulse-gke"),
-        node_pool_name=os.environ.get("NODE_POOL_NAME", "pulse-pool"),
+        node_pool_name=os.environ.get("NODE_POOL_NAME", "cheap-pool"),
     )
     print("Node scaler initialized")
 except Exception as e:
